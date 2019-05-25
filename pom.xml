@@ -21,6 +21,8 @@
         <maven-compiler-plugin.version>3.6.2</maven-compiler-plugin.version>
         <maven-plugin-plugin.version>3.5</maven-plugin-plugin.version>
         <jdk.version>1.8</jdk.version>
+        <plexus-component-metadata.version>1.7.1</plexus-component-metadata.version>
+        <maven-resources-plugin.version>3.0.2</maven-resources-plugin.version>
     </properties>
 
     <dependencies>
@@ -110,6 +112,61 @@
                         <id>help-goal</id>
                         <goals>
                             <goal>helpmojo</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>${maven-resources-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>copy-plexus-resources</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/filtered-resources/META-INF/plexus</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources/META-INF/plexus</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-asciidoc</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}/META-INF/doc/dmp</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/asciidoc</directory>
+                                    <filtering>false</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-component-metadata</artifactId>
+                <version>${plexus-component-metadata.version}</version>
+                <configuration>
+                    <staticMetadataDirectory>${basedir}/target/filtered-resources/META-INF/plexus</staticMetadataDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate-metadata</goal>
                         </goals>
                     </execution>
                 </executions>

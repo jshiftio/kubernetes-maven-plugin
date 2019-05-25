@@ -3,12 +3,22 @@ package io.jshift.maven.plugin.mojo.build;
 import io.jshift.generator.api.GeneratorContext;
 import io.jshift.kit.build.maven.MavenBuildContext;
 import io.jshift.kit.build.service.docker.BuildService;
+import io.jshift.kit.build.service.docker.DockerAccessFactory;
 import io.jshift.kit.build.service.docker.ImageConfiguration;
 import io.jshift.kit.build.service.docker.ImagePullManager;
 import io.jshift.kit.build.service.docker.RegistryService;
 import io.jshift.kit.build.service.docker.ServiceHub;
+import io.jshift.kit.build.service.docker.ServiceHubFactory;
+import io.jshift.kit.build.service.docker.access.DockerAccess;
 import io.jshift.kit.build.service.docker.access.DockerAccessException;
+import io.jshift.kit.build.service.docker.access.ExecException;
+import io.jshift.kit.build.service.docker.access.log.LogOutputSpecFactory;
 import io.jshift.kit.build.service.docker.auth.AuthConfigFactory;
+import io.jshift.kit.build.service.docker.config.ConfigHelper;
+import io.jshift.kit.build.service.docker.config.DockerMachineConfiguration;
+import io.jshift.kit.build.service.docker.config.handler.ImageConfigResolver;
+import io.jshift.kit.build.service.docker.helper.AnsiLogger;
+import io.jshift.kit.build.service.docker.helper.ImageNameFormatter;
 import io.jshift.kit.common.KitLogger;
 import io.jshift.kit.common.util.EnvUtil;
 import io.jshift.kit.common.util.ResourceUtil;
@@ -63,7 +73,7 @@ import java.util.Properties;
  * @since 16/03/16
  */
 @Mojo(name = "build", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresDependencyResolution = ResolutionScope.COMPILE)
-public class BuildMojo extends AbstractMojo {
+public class BuildMojo extends AbstractMojo implements ConfigHelper.Customizer {
 
     public static final String DMP_PLUGIN_DESCRIPTOR = "META-INF/maven/io.jshift/k8s-plugin";
     public static final String DOCKER_EXTRA_DIR = "docker-extra";
@@ -80,9 +90,47 @@ public class BuildMojo extends AbstractMojo {
     // Filename for holding the build timestamp
     public static final String DOCKER_BUILD_TIMESTAMP = "docker/build.timestamp";
 
+    @Parameter(property = "docker.apiVersion")
+    private String apiVersion;
+
     // Current maven project
     @Parameter(defaultValue = "${project}", readonly = true)
     protected MavenProject project;
+
+    // For verbose output
+    @Parameter(property = "docker.verbose", defaultValue = "false")
+    protected boolean verbose;
+
+    // The date format to use when putting out logs
+    @Parameter(property = "docker.logDate")
+    private String logDate;
+
+    // Log to stdout regardless if log files are configured or not
+    @Parameter(property = "docker.logStdout", defaultValue = "false")
+    private boolean logStdout;
+
+    /**
+     * URL to docker daemon
+     */
+    @Parameter(property = "docker.host")
+    private String dockerHost;
+
+    @Parameter(property = "docker.certPath")
+    private String certPath;
+
+    // Docker-machine configuration
+    @Parameter
+    private DockerMachineConfiguration machine;
+
+    /**
+     * Whether the usage of docker machine should be skipped competely
+     */
+    @Parameter(property = "docker.skip.machine", defaultValue = "false")
+    private boolean skipMachine;
+
+    // maximum connection to use in parallel for connecting the docker host
+    @Parameter(property = "docker.maxConnections", defaultValue = "100")
+    private int maxConnections;
 
     /**
      * Generator specific options. This is a generic prefix where the keys have the form
@@ -133,6 +181,10 @@ public class BuildMojo extends AbstractMojo {
     @Parameter(property = "fabric8.skip.build.pom")
     private Boolean skipBuildPom;
 
+    // Whether to use color
+    @Parameter(property = "docker.useColor", defaultValue = "true")
+    protected boolean useColor;
+
     /**
      * Whether to perform a Kubernetes build (i.e. against a vanilla Docker daemon) or
      * an OpenShift build (with a Docker build against the OpenShift API server.
@@ -181,6 +233,26 @@ public class BuildMojo extends AbstractMojo {
      */
     @Parameter(property = "fabric8.build.forcePull", defaultValue = "false")
     private boolean forcePull = false;
+
+    /**
+     * Image configurations configured directly.
+     */
+    @Parameter
+    private List<ImageConfiguration> images;
+
+    /**
+     * Whether to restrict operation to a single image. This can be either
+     * the image or an alias name. It can also be comma separated list.
+     * This parameter has to be set via the command line s system property.
+     */
+    @Parameter(property = "docker.filter")
+    private String filter;
+
+    @Component
+    protected ServiceHubFactory serviceHubFactory;
+
+    @Component
+    protected DockerAccessFactory dockerAccessFactory;
 
     /**
      * Should we use the project's compile-time classpath to scan for additional enrichers/generators?
@@ -262,6 +334,10 @@ public class BuildMojo extends AbstractMojo {
     @Parameter(property = "docker.pull.registry")
     private String pullRegistry;
 
+    // Handler for external configurations
+    @Component
+    protected ImageConfigResolver imageConfigResolver;
+
     /**
      * Skip extended authentication
      */
@@ -283,17 +359,20 @@ public class BuildMojo extends AbstractMojo {
 
     protected KitLogger log;
 
+    private String minimalApiVersion;
+
     // Handler dealing with authentication credentials
     private AuthConfigFactory authConfigFactory;
 
 
+    @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skip || skipBuild) {
             return;
         }
         clusterAccess = new ClusterAccess(getClusterConfiguration());
         // Platform mode is already used in executeInternal()
-        //super.execute();
+        executeDockerBuild();
     }
 
     protected ClusterConfiguration getClusterConfiguration() {
@@ -651,5 +730,111 @@ public class BuildMojo extends AbstractMojo {
         } catch (NoSuchMethodException exp) {
             log.verbose("Build plugin %s does not support 'addExtraFiles' method", buildPluginClass);
         }
+    }
+
+    public void executeDockerBuild() throws MojoExecutionException, MojoFailureException {
+        if (!skip) {
+            log = new AnsiLogger(getLog(), useColor, verbose, !settings.getInteractiveMode(), getLogPrefix());
+            authConfigFactory.setLog(log);
+            imageConfigResolver.setLog(log);
+
+            LogOutputSpecFactory logSpecFactory = new LogOutputSpecFactory(useColor, logStdout, logDate);
+
+            ConfigHelper.validateExternalPropertyActivation(project, images);
+
+            DockerAccess access = null;
+            try {
+                // The 'real' images configuration to use (configured images + externally resolved images)
+                this.minimalApiVersion = initImageConfiguration(getBuildTimestamp());
+                if (isDockerAccessRequired()) {
+                    DockerAccessFactory.DockerAccessContext dockerAccessContext = getDockerAccessContext();
+                    access = dockerAccessFactory.createDockerAccess(dockerAccessContext);
+                }
+                ServiceHub serviceHub = serviceHubFactory.createServiceHub(project, session, access, log, logSpecFactory);
+                executeInternal(serviceHub);
+            } catch (IOException exp) {
+                logException(exp);
+                throw new MojoExecutionException(exp.getMessage());
+            } catch (MojoExecutionException exp) {
+                logException(exp);
+                throw exp;
+            } finally {
+                if (access != null) {
+                    access.shutdown();
+                }
+            }
+        }
+    }
+
+    // Resolve and customize image configuration
+    private String initImageConfiguration(Date buildTimeStamp)  {
+        // Resolve images
+        resolvedImages = ConfigHelper.resolveImages(
+                log,
+                images,                  // Unresolved images
+                (ImageConfiguration image) -> imageConfigResolver.resolve(image, project, session),
+                filter,                   // A filter which image to process
+                this);                     // customizer (can be overwritten by a subclass)
+
+        // Check for simple Dockerfile mode
+        File topDockerfile = new File(project.getBasedir(),"Dockerfile");
+        if (topDockerfile.exists()) {
+            if (resolvedImages.isEmpty()) {
+                resolvedImages.add(createSimpleDockerfileConfig(topDockerfile));
+            } else if (resolvedImages.size() == 1 && resolvedImages.get(0).getBuildConfiguration() == null) {
+                resolvedImages.set(0, addSimpleDockerfileConfig(resolvedImages.get(0), topDockerfile));
+            }
+        }
+
+        // Initialize configuration and detect minimal API version
+        return ConfigHelper.initAndValidate(resolvedImages, apiVersion, new ImageNameFormatter(project, buildTimeStamp), log);
+    }
+
+    private ImageConfiguration createSimpleDockerfileConfig(File dockerFile) {
+        // No configured name, so create one from maven GAV
+        String name = EnvUtil.getPropertiesWithSystemOverrides(project).getProperty("docker.name");
+        if (name == null) {
+            // Default name group/artifact:version (or 'latest' if SNAPSHOT)
+            name = "%g/%a:%l";
+        }
+
+        BuildConfiguration buildConfig =
+                new BuildConfiguration.Builder()
+                        .dockerFile(dockerFile.getPath())
+                        .build();
+
+        return new ImageConfiguration.Builder()
+                .name(name)
+                .buildConfig(buildConfig)
+                .build();
+    }
+
+    private ImageConfiguration addSimpleDockerfileConfig(ImageConfiguration image, File dockerfile) {
+        BuildConfiguration buildConfig =
+                new BuildConfiguration.Builder()
+                        .dockerFile(dockerfile.getPath())
+                        .build();
+        return new ImageConfiguration.Builder(image).buildConfig(buildConfig).build();
+    }
+
+    private void logException(Exception exp) {
+        if (exp.getCause() != null) {
+            log.error("%s [%s]", exp.getMessage(), exp.getCause().getMessage());
+        } else {
+            log.error("%s", exp.getMessage());
+        }
+    }
+
+    protected DockerAccessFactory.DockerAccessContext getDockerAccessContext() {
+        return new DockerAccessFactory.DockerAccessContext.Builder()
+                .dockerHost(dockerHost)
+                .certPath(certPath)
+                .machine(machine)
+                .maxConnections(maxConnections)
+                .minimalApiVersion(minimalApiVersion)
+                .projectProperties(project.getProperties())
+                .skipMachine(skipMachine)
+                .log(log)
+                .build();
     }
 }
