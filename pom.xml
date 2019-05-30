@@ -52,6 +52,54 @@
 
         <dependency>
             <groupId>io.jshift</groupId>
+            <artifactId>jshift-maven-generator-java-exec</artifactId>
+            <version>${jshift.kit.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.jshift</groupId>
+            <artifactId>jshift-maven-generator-karaf</artifactId>
+            <version>${jshift.kit.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.jshift</groupId>
+            <artifactId>jshift-maven-generator-webapp</artifactId>
+            <version>${jshift.kit.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.jshift</groupId>
+            <artifactId>jshift-maven-generator-wildfly-swarm</artifactId>
+            <version>${jshift.kit.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.jshift</groupId>
+            <artifactId>jshift-kit-thorntail</artifactId>
+            <version>${jshift.kit.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.jshift</groupId>
+            <artifactId>jshift-kit-spring-boot</artifactId>
+            <version>${jshift.kit.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.jshift</groupId>
+            <artifactId>jshift-kit-quarkus</artifactId>
+            <version>${jshift.kit.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.jshift</groupId>
+            <artifactId>jshift-kit-vertx</artifactId>
+            <version>${jshift.kit.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.jshift</groupId>
             <artifactId>jshift-kit-build-maven</artifactId>
             <version>${jshift.kit.version}</version>
         </dependency>
@@ -77,6 +125,11 @@
             <groupId>org.apache.maven.plugin-tools</groupId>
             <artifactId>maven-plugin-annotations</artifactId>
             <version>${maven-plugin-annotation.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-archiver</artifactId>
+            <version>3.5</version>
         </dependency>
 
     </dependencies>
