@@ -50,10 +50,10 @@ public class GeneratorManager {
         }
 
         List<Generator> generators =
-            pluginFactory.createServiceObjects("META-INF/fabric8/generator-default",
-                                               "META-INF/fabric8/fabric8-generator-default",
-                                               "META-INF/fabric8/generator",
-                                               "META-INF/fabric8-generator");
+            pluginFactory.createServiceObjects("META-INF/jshift/generator-default",
+                                               "META-INF/jshift/jshift-generator-default",
+                                               "META-INF/jshift/generator",
+                                               "META-INF/jshift-generator");
         ProcessorConfig config = genCtx.getConfig();
         KitLogger log = genCtx.getLogger();
         List<Generator> usableGenerators = config.prepareProcessors(generators, "generator");
