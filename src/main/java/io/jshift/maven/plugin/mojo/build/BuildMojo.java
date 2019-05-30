@@ -52,6 +52,11 @@ import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.shared.filtering.MavenFileFilter;
 import org.apache.maven.shared.filtering.MavenReaderFilter;
+import org.codehaus.plexus.PlexusConstants;
+import org.codehaus.plexus.PlexusContainer;
+import org.codehaus.plexus.context.Context;
+import org.codehaus.plexus.context.ContextException;
+import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
 
 import java.io.File;
 import java.io.IOException;
@@ -73,7 +78,7 @@ import java.util.Properties;
  * @since 16/03/16
  */
 @Mojo(name = "build", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresDependencyResolution = ResolutionScope.COMPILE)
-public class BuildMojo extends AbstractMojo implements ConfigHelper.Customizer {
+public class BuildMojo extends AbstractMojo implements Contextualizable, ConfigHelper.Customizer {
 
     public static final String DMP_PLUGIN_DESCRIPTOR = "META-INF/maven/io.jshift/k8s-plugin";
     public static final String DOCKER_EXTRA_DIR = "docker-extra";
@@ -373,6 +378,11 @@ public class BuildMojo extends AbstractMojo implements ConfigHelper.Customizer {
         clusterAccess = new ClusterAccess(getClusterConfiguration());
         // Platform mode is already used in executeInternal()
         executeDockerBuild();
+    }
+
+    @Override
+    public void contextualize(Context context) throws ContextException {
+        authConfigFactory = new AuthConfigFactory((PlexusContainer) context.get(PlexusConstants.PLEXUS_KEY));
     }
 
     protected ClusterConfiguration getClusterConfiguration() {

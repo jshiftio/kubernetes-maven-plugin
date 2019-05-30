@@ -99,6 +99,34 @@
     <component>
       <role>io.jshift.kit.build.maven.assembly.DockerAssemblyManager</role>
       <implementation>io.jshift.kit.build.maven.assembly.DockerAssemblyManager</implementation>
+      <requirements>
+        <requirement>
+          <role>org.codehaus.plexus.archiver.Archiver</role>
+          <field-name>trackArchiver</field-name>
+        </requirement>
+        <requirement>
+          <role>org.apache.maven.plugins.assembly.archive.AssemblyArchiver</role>
+          <field-name>assemblyArchiver</field-name>
+        </requirement>
+        <requirement>
+          <role>org.apache.maven.plugins.assembly.io.AssemblyReader</role>
+          <field-name>assemblyReader</field-name>
+        </requirement>
+        <requirement>
+          <role>org.codehaus.plexus.archiver.manager.ArchiverManager</role>
+          <field-name>archiverManager</field-name>
+        </requirement>
+      </requirements>
+      <isolated-realm>false</isolated-realm>
+    </component>
+    <component>
+      <role>io.jshift.kit.build.service.docker.DockerAccessFactory</role>
+      <implementation>io.jshift.kit.build.service.docker.DockerAccessFactory</implementation>
+      <isolated-realm>false</isolated-realm>
+    </component>
+    <component>
+      <role>io.jshift.kit.build.service.docker.config.handler.ImageConfigResolver</role>
+      <implementation>io.jshift.kit.build.service.docker.config.handler.ImageConfigResolver</implementation>
       <isolated-realm>false</isolated-realm>
     </component>
   </components>
