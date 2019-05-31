@@ -39,10 +39,10 @@ public class EnricherManager {
         this.log = enricherContext.getLog();
         this.defaultEnricherConfig = enricherContext.getConfiguration().getProcessorConfig().orElse(ProcessorConfig.EMPTY);
 
-        this.enrichers = pluginFactory.createServiceObjects("META-INF/fabric8-enricher-default",
-                "META-INF/fabric8/enricher-default",
-                "META-INF/fabric8-enricher",
-                "META-INF/fabric8/enricher");
+        this.enrichers = pluginFactory.createServiceObjects("META-INF/jshift-enricher-default",
+                "META-INF/jshift/enricher-default",
+                "META-INF/jshift-enricher",
+                "META-INF/jshift/enricher");
 
         logEnrichers(filterEnrichers(defaultEnricherConfig, enrichers));
 
