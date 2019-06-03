@@ -122,6 +122,18 @@
             <version>${jshift.kit.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.jshift</groupId>
+            <artifactId>jshift-kit-watcher-api</artifactId>
+            <version>${jshift.kit.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.jshift</groupId>
+            <artifactId>jshift-watcher-standard</artifactId>
+            <version>${jshift.kit.version}</version>
+        </dependency>
+
         <!--Maven dependencies-->
         <dependency>
             <groupId>org.apache.maven</groupId>
