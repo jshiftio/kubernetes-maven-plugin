@@ -45,10 +45,6 @@ import org.apache.maven.settings.Settings;
 import org.apache.maven.shared.filtering.MavenFileFilter;
 import org.apache.maven.shared.filtering.MavenReaderFilter;
 import org.apache.maven.shared.utils.logging.MessageUtils;
-import org.codehaus.plexus.PlexusConstants;
-import org.codehaus.plexus.PlexusContainer;
-import org.codehaus.plexus.context.Context;
-import org.codehaus.plexus.context.ContextException;
 import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
 
 import java.io.File;
@@ -174,7 +170,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo implements ConfigH
      * However, any given enricher and or generator configuration overrides
      * the information provided by a profile.
      */
-    @Parameter(property = "fabric8.profile")
+    @Parameter(property = "jshift.profile")
     protected String profile;
 
     // Handler for external configurations
@@ -224,7 +220,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo implements ConfigH
      * <li><strong>none</strong> : Neither build config nor image stream is recreated</li>
      * </ul>
      */
-    @Parameter(property = "fabric8.build.recreate", defaultValue = "none")
+    @Parameter(property = "jshift.build.recreate", defaultValue = "none")
     protected String buildRecreate;
 
     @Component
@@ -253,35 +249,35 @@ public abstract class AbstractDockerMojo extends AbstractMojo implements ConfigH
      * Can be either "s2i" for an s2i binary build mode or "docker" for a binary
      * docker mode.
      */
-    @Parameter(property = "fabric8.build.strategy")
+    @Parameter(property = "jshift.build.strategy")
     protected OpenShiftBuildStrategy buildStrategy = OpenShiftBuildStrategy.s2i;
 
     /**
      * The name of pullSecret to be used to pull the base image in case pulling from a protected
      * registry which requires authentication.
      */
-    @Parameter(property = "fabric8.build.pullSecret", defaultValue = "pullsecret-fabric8")
+    @Parameter(property = "jshift.build.pullSecret", defaultValue = "pullsecret-jshift")
     protected String openshiftPullSecret;
 
     // To skip over the execution of the goal
-    @Parameter(property = "fabric8.skip", defaultValue = "false")
+    @Parameter(property = "jshift.skip", defaultValue = "false")
     protected boolean skip;
 
     /**
      * Whether to perform a Kubernetes build (i.e. against a vanilla Docker daemon) or
      * an OpenShift build (with a Docker build against the OpenShift API server.
      */
-    @Parameter(property = "fabric8.mode")
+    @Parameter(property = "jshift.mode")
     protected RuntimeMode mode = RuntimeMode.DEFAULT;
 
-    @Parameter(property = "fabric8.skip.build.pom")
+    @Parameter(property = "jshift.skip.build.pom")
     protected Boolean skipBuildPom;
 
     /**
      * The S2I binary builder BuildConfig name suffix appended to the image name to avoid
      * clashing with the underlying BuildConfig for the Jenkins pipeline
      */
-    @Parameter(property = "fabric8.s2i.buildNameSuffix", defaultValue = "-s2i")
+    @Parameter(property = "jshift.s2i.buildNameSuffix", defaultValue = "-s2i")
     protected String s2iBuildNameSuffix;
 
     /**
@@ -295,7 +291,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo implements ConfigH
      * Allow the ImageStream used in the S2I binary build to be used in standard
      * Kubernetes resources such as Deployment or StatefulSet.
      */
-    @Parameter(property = "fabric8.s2i.imageStreamLookupPolicyLocal", defaultValue = "true")
+    @Parameter(property = "jshift.s2i.imageStreamLookupPolicyLocal", defaultValue = "true")
     protected boolean s2iImageStreamLookupPolicyLocal = true;
 
     /**
@@ -304,13 +300,13 @@ public abstract class AbstractDockerMojo extends AbstractMojo implements ConfigH
      * <p>
      * ForcePull to override the local image and refresh it from the registry to which the image stream points.
      */
-    @Parameter(property = "fabric8.build.forcePull", defaultValue = "false")
+    @Parameter(property = "jshift.build.forcePull", defaultValue = "false")
     protected boolean forcePull = false;
 
     /**
      * Should we use the project's compile-time classpath to scan for additional enrichers/generators?
      */
-    @Parameter(property = "fabric8.useProjectClasspath", defaultValue = "false")
+    @Parameter(property = "jshift.useProjectClasspath", defaultValue = "false")
     protected boolean useProjectClasspath = false;
 
     /**
@@ -329,13 +325,13 @@ public abstract class AbstractDockerMojo extends AbstractMojo implements ConfigH
     /**
      * Folder where to find project specific files, e.g a custom profile
      */
-    @Parameter(property = "fabric8.resourceDir", defaultValue = "${basedir}/src/main/fabric8")
+    @Parameter(property = "jshift.resourceDir", defaultValue = "${basedir}/src/main/jshift")
     protected File resourceDir;
 
     /**
-     * Environment name where resources are placed. For example, if you set this property to dev and resourceDir is the default one, Fabric8 will look at src/main/fabric8/dev
+     * Environment name where resources are placed. For example, if you set this property to dev and resourceDir is the default one, Plugin will look at src/main/jshift/dev
      */
-    @Parameter(property = "fabric8.environment")
+    @Parameter(property = "jshift.environment")
     protected String environment;
 
     // Handler dealing with authentication credentials
@@ -348,8 +344,8 @@ public abstract class AbstractDockerMojo extends AbstractMojo implements ConfigH
     // Access for creating OpenShift binary builds
     protected ClusterAccess clusterAccess;
 
-    // The Fabric8 service hub
-    protected JshiftServiceHub fabric8ServiceHub;
+    // The Jshift service hub
+    protected JshiftServiceHub jshiftServiceHub;
 
     // Mode which is resolved, also when 'auto' is set
     protected RuntimeMode runtimeMode;
@@ -553,7 +549,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo implements ConfigH
             }
 
             // Build the Jshift service hub
-            fabric8ServiceHub = new JshiftServiceHub.Builder()
+            jshiftServiceHub = new JshiftServiceHub.Builder()
                     .log(log)
                     .clusterAccess(clusterAccess)
                     .platformMode(mode)
@@ -565,7 +561,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo implements ConfigH
 
             executeBuildGoal(hub);
 
-            fabric8ServiceHub.getBuildService().postProcess(getBuildServiceConfig());
+            jshiftServiceHub.getBuildService().postProcess(getBuildServiceConfig());
         } catch (IOException exception) {
             throw new MojoExecutionException(exception.getMessage());
         }
@@ -611,7 +607,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo implements ConfigH
             // TODO need to refactor d-m-p to avoid this call
             EnvUtil.storeTimestamp(getBuildTimestampFile(), getBuildTimestamp());
 
-            fabric8ServiceHub.getBuildService().build(imageConfig);
+            jshiftServiceHub.getBuildService().build(imageConfig);
 
         } catch (Exception ex) {
             throw new MojoExecutionException("Failed to execute the build", ex);
@@ -675,11 +671,11 @@ public abstract class AbstractDockerMojo extends AbstractMojo implements ConfigH
                 .runtimeMode(runtimeMode)
                 .strategy(buildStrategy)
                 .useProjectClasspath(useProjectClasspath)
-                .artifactResolver(getFabric8ServiceHub().getArtifactResolverService())
+                .artifactResolver(getJshiftServiceHub().getArtifactResolverService())
                 .build();
     }
 
-    protected JshiftServiceHub getFabric8ServiceHub() {
+    protected JshiftServiceHub getJshiftServiceHub() {
         return new JshiftServiceHub.Builder()
                 .log(log)
                 .clusterAccess(clusterAccess)
