@@ -79,7 +79,7 @@ public abstract class AbstractJshiftMojo extends AbstractMojo {
     }
 
     protected KitLogger createLogger(String prefix) {
-        return new AnsiLogger(getLog(), useColor, verbose, !settings.getInteractiveMode(), "F8:" + prefix);
+        return new AnsiLogger(getLog(), useColor, verbose, !settings.getInteractiveMode(), "k8s:" + prefix);
     }
 
     protected ClusterConfiguration getClusterConfiguration() {

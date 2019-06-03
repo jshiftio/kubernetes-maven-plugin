@@ -529,7 +529,7 @@ public class BuildMojo extends AbstractMojo implements Contextualizable, ConfigH
     }
 
     protected String getLogPrefix() {
-        return "K8S: ";
+        return "k8s: ";
     }
 
     // ==================================================================================================
