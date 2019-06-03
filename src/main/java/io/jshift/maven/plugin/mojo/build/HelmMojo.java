@@ -56,13 +56,13 @@ public class HelmMojo extends AbstractJshiftMojo {
     /**
      * The generated kubernetes YAML file
      */
-    @Parameter(property = "fabric8.kubernetesManifest", defaultValue = "${basedir}/target/classes/META-INF/fabric8/kubernetes.yml")
+    @Parameter(property = "jshift.kubernetesManifest", defaultValue = "${basedir}/target/classes/META-INF/jshift/kubernetes.yml")
     private File kubernetesManifest;
 
     /**
      * The generated kubernetes YAML file
      */
-    @Parameter(property = "fabric8.kubernetesTemplate", defaultValue = "${basedir}/target/classes/META-INF/fabric8/k8s-template.yml")
+    @Parameter(property = "jshift.kubernetesTemplate", defaultValue = "${basedir}/target/classes/META-INF/jshift/k8s-template.yml")
     private File kubernetesTemplate;
 
     @Component
@@ -117,7 +117,7 @@ public class HelmMojo extends AbstractJshiftMojo {
     }
 
     private String getChartName() {
-        String ret = getProperty("fabric8.helm.chart");
+        String ret = getProperty("jshift.helm.chart");
         if (ret != null) {
             return ret;
         }
@@ -128,7 +128,7 @@ public class HelmMojo extends AbstractJshiftMojo {
     }
 
     private String getChartFileExtension() {
-        String ret = getProperty("fabric8.helm.chartExtension");
+        String ret = getProperty("jshift.helm.chartExtension");
         if (ret != null) {
             return ret;
         }
@@ -139,9 +139,9 @@ public class HelmMojo extends AbstractJshiftMojo {
     }
 
     private File prepareOutputDir(HelmConfig.HelmType type) throws MojoExecutionException {
-        String dir = getProperty("fabric8.helm.outputDir");
+        String dir = getProperty("jshift.helm.outputDir");
         if (dir == null) {
-            dir = String.format("%s/fabric8/helm/%s/%s",
+            dir = String.format("%s/jshift/helm/%s/%s",
                                 project.getBuild().getDirectory(),
                                 type.getOutputDir(),
                                 getChartName());
@@ -158,26 +158,26 @@ public class HelmMojo extends AbstractJshiftMojo {
     }
 
     private File checkSourceDir(String chartName, HelmConfig.HelmType type) {
-        String dir = getProperty("fabric8.helm.sourceDir");
+        String dir = getProperty("jshift.helm.sourceDir");
         if (dir == null) {
-            dir = project.getBuild().getOutputDirectory() + "/META-INF/fabric8/" + type.getSourceDir();
+            dir = project.getBuild().getOutputDirectory() + "/META-INF/jshift/" + type.getSourceDir();
         }
         File dirF = new File(dir);
         if (!dirF.isDirectory() || !dirF.exists()) {
             log.warn("Chart source directory %s does not exist so cannot make chart %s. " +
-                     "Probably you need run 'mvn fabric8:resource' before.", dirF, chartName);
+                     "Probably you need run 'mvn kubernetes:resource' before.", dirF, chartName);
             return null;
         }
         if (!containsYamlFiles(dirF)) {
             log.warn("Chart source directory %s does not contain any YAML manifest to make chart %s. " +
-                     "Probably you need run 'mvn fabric8:resource' before.", dirF, chartName);
+                     "Probably you need run 'mvn kubernetes:resource' before.", dirF, chartName);
             return null;
         }
         return dirF;
     }
 
     private List<HelmConfig.HelmType> getHelmTypes() {
-        String helmTypeProp = getProperty("fabric8.helm.type");
+        String helmTypeProp = getProperty("jshift.helm.type");
         if (StringUtils.isNotBlank(helmTypeProp)) {
             String[] propTypes = StringUtils.split(helmTypeProp, ",");
             List<HelmConfig.HelmType> ret = new ArrayList<>();
@@ -278,14 +278,14 @@ public class HelmMojo extends AbstractJshiftMojo {
                 throw new MojoExecutionException("Failed to load kubernetes YAML " + kubernetesManifest + ". " + e, e);
             }
             if (dto instanceof HasMetadata) {
-                answer = KubernetesHelper.getOrCreateAnnotations((HasMetadata) dto).get("fabric8.io/iconUrl");
+                answer = KubernetesHelper.getOrCreateAnnotations((HasMetadata) dto).get("jshift.io/iconUrl");
             }
             if (StringUtils.isBlank(answer) && dto instanceof KubernetesList) {
                 KubernetesList list = (KubernetesList) dto;
                 List<HasMetadata> items = list.getItems();
                 if (items != null) {
                     for (HasMetadata item : items) {
-                        answer = KubernetesHelper.getOrCreateAnnotations(item).get("fabric8.io/iconUrl");
+                        answer = KubernetesHelper.getOrCreateAnnotations(item).get("jshift.io/iconUrl");
                         if (StringUtils.isNotBlank(answer)) {
                             break;
                         }
@@ -293,7 +293,7 @@ public class HelmMojo extends AbstractJshiftMojo {
                 }
             }
         } else {
-            getLog().warn("No kubernetes manifest file has been generated yet by the fabric8:resource goal at: " + kubernetesManifest);
+            getLog().warn("No kubernetes manifest file has been generated yet by the kubernetes:resource goal at: " + kubernetesManifest);
         }
         return answer;
     }
