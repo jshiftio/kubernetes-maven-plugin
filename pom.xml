@@ -76,12 +76,6 @@
 
         <dependency>
             <groupId>io.jshift</groupId>
-            <artifactId>jshift-maven-enricher-api</artifactId>
-            <version>${jshift.kit.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.jshift</groupId>
             <artifactId>jshift-maven-enricher-generic</artifactId>
             <version>${jshift.kit.version}</version>
         </dependency>
