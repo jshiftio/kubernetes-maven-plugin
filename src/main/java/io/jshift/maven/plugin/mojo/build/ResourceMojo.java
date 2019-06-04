@@ -81,12 +81,6 @@ import static io.jshift.maven.plugin.mojo.build.BuildMojo.CONTEXT_KEY_BUILD_TIME
  */
 @Mojo(name = "resource", defaultPhase = LifecyclePhase.PROCESS_RESOURCES, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class ResourceMojo extends AbstractJshiftMojo {
-    /**
-     * Used to annotate a resource as being for a specific platform only such as "kubernetes" or "openshift"
-     */
-
-    // THe key how we got the the docker maven plugin
-    private static final String DOCKER_MAVEN_PLUGIN_KEY = "io.fabric8:docker-maven-plugin";
 
     // Filename for holding the build timestamp
     public static final String DOCKER_BUILD_TIMESTAMP = "docker/build.timestamp";
@@ -95,7 +89,7 @@ public class ResourceMojo extends AbstractJshiftMojo {
     /**
      * The generated kubernetes and openshift manifests
      */
-    @Parameter(property = "fabric8.targetDir", defaultValue = "${project.build.outputDirectory}/META-INF/fabric8")
+    @Parameter(property = "jshift.targetDir", defaultValue = "${project.build.outputDirectory}/META-INF/jshift")
     protected File targetDir;
 
     @Component(role = MavenFileFilter.class, hint = "default")
@@ -107,60 +101,60 @@ public class ResourceMojo extends AbstractJshiftMojo {
     /**
      * Folder where to find project specific files
      */
-    @Parameter(property = "fabric8.resourceDir", defaultValue = "${basedir}/src/main/fabric8")
+    @Parameter(property = "jshift.resourceDir", defaultValue = "${basedir}/src/main/jshift")
     private File resourceDir;
 
     /**
      * Folder where to find project specific files
      */
-    @Parameter(property = "fabric8.resourceDirOpenShiftOverride", defaultValue = "${basedir}/src/main/fabric8-openshift-override")
+    @Parameter(property = "jshift.resourceDirOpenShiftOverride", defaultValue = "${basedir}/src/main/jshift-openshift-override")
     private File resourceDirOpenShiftOverride;
 
     /**
-     * Environment name where resources are placed. For example, if you set this property to dev and resourceDir is the default one, Fabric8 will look at src/main/fabric8/dev
+     * Environment name where resources are placed. For example, if you set this property to dev and resourceDir is the default one, plugin will look at src/main/jshift/dev
      * Same applies for resourceDirOpenShiftOverride property.
      */
-    @Parameter(property = "fabric8.environment")
+    @Parameter(property = "jshift.environment")
     private String environment;
 
     /**
      * Should we use the project's compile-time classpath to scan for additional enrichers/generators?
      */
-    @Parameter(property = "fabric8.useProjectClasspath", defaultValue = "false")
+    @Parameter(property = "jshift.useProjectClasspath", defaultValue = "false")
     private boolean useProjectClasspath = false;
 
     /**
-     * The fabric8 working directory
+     * The jshift working directory
      */
-    @Parameter(property = "fabric8.workDir", defaultValue = "${project.build.directory}/fabric8")
+    @Parameter(property = "jshift.workDir", defaultValue = "${project.build.directory}/jshift")
     private File workDir;
 
     /**
-     * The fabric8 working directory
+     * The jshift working directory
      */
-    @Parameter(property = "fabric8.workDirOpenShiftOverride", defaultValue = "${project.build.directory}/fabric8-openshift-override")
+    @Parameter(property = "jshift.workDirOpenShiftOverride", defaultValue = "${project.build.directory}/jshift-openshift-override")
     private File workDirOpenShiftOverride;
 
     // Resource specific configuration for this plugin
     @Parameter
     private ResourceConfig resources;
 
-    @Parameter(property = "fabric8.mode")
+    @Parameter(property = "jshift.mode")
     private RuntimeMode runtimeMode = RuntimeMode.DEFAULT;
 
     // Skip resource descriptors validation
-    @Parameter(property = "fabric8.skipResourceValidation", defaultValue = "false")
+    @Parameter(property = "jshift.skipResourceValidation", defaultValue = "false")
     private Boolean skipResourceValidation;
 
     // Determine if the plugin should stop when a validation error is encountered
-    @Parameter(property = "fabric8.failOnValidationError", defaultValue = "false")
+    @Parameter(property = "jshift.failOnValidationError", defaultValue = "false")
     private Boolean failOnValidationError;
 
     // Reusing image configuration from d-m-p
     @Parameter
     private List<ImageConfiguration> images;
 
-    @Parameter(property = "fabric8.build.switchToDeployment", defaultValue = "false")
+    @Parameter(property = "jshift.build.switchToDeployment", defaultValue = "false")
     private Boolean switchToDeployment;
     /**
      * Profile to use. A profile contains the enrichers and generators to
@@ -170,7 +164,7 @@ public class ResourceMojo extends AbstractJshiftMojo {
      * However, any given enricher and or generator configuration overrides
      * the information provided by a profile.
      */
-    @Parameter(property = "fabric8.profile")
+    @Parameter(property = "jshift.profile")
     private String profile;
 
     /**
@@ -179,7 +173,7 @@ public class ResourceMojo extends AbstractJshiftMojo {
      */
 
     // Resource specific configuration for this plugin
-    @Parameter(property = "fabric8.gitRemote")
+    @Parameter(property = "jshift.gitRemote")
     private String gitRemote;
 
     @Parameter
@@ -208,13 +202,13 @@ public class ResourceMojo extends AbstractJshiftMojo {
     /**
      * Namespace to use when accessing Kubernetes or OpenShift
      */
-    @Parameter(property = "fabric8.namespace")
+    @Parameter(property = "jshift.namespace")
     private String namespace;
 
-    @Parameter(property = "fabric8.sidecar", defaultValue = "false")
+    @Parameter(property = "jshift.sidecar", defaultValue = "false")
     private Boolean sidecar;
 
-    @Parameter(property = "fabric8.skipHealthCheck", defaultValue = "false")
+    @Parameter(property = "jshift.skipHealthCheck", defaultValue = "false")
     private Boolean skipHealthCheck;
 
     /**
@@ -231,7 +225,7 @@ public class ResourceMojo extends AbstractJshiftMojo {
      * (in short: Its because Docker image download times are added to the deployment time, making
      * the default of 10 minutes quite unusable if multiple images are included in the deployment).
      */
-    @Parameter(property = "fabric8.openshift.deployTimeoutSeconds", defaultValue = "3600")
+    @Parameter(property = "jshift.openshift.deployTimeoutSeconds", defaultValue = "3600")
     private Long openshiftDeployTimeoutSeconds;
 
     /**
@@ -244,19 +238,19 @@ public class ResourceMojo extends AbstractJshiftMojo {
      *     <li>https://github.com/fabric8io/fabric8-maven-plugin/issues/1130</li>
      * </ul>
      */
-    @Parameter(property = "fabric8.openshift.trimImageInContainerSpec", defaultValue = "false")
+    @Parameter(property = "jshift.openshift.trimImageInContainerSpec", defaultValue = "false")
     private Boolean trimImageInContainerSpec;
 
-    @Parameter(property = "fabric8.openshift.generateRoute", defaultValue = "true")
+    @Parameter(property = "jshift.openshift.generateRoute", defaultValue = "true")
     private Boolean generateRoute;
 
-    @Parameter(property = "fabric8.openshift.enableAutomaticTrigger", defaultValue = "true")
+    @Parameter(property = "jshift.openshift.enableAutomaticTrigger", defaultValue = "true")
     private Boolean enableAutomaticTrigger;
 
-    @Parameter(property = "fabric8.openshift.imageChangeTrigger", defaultValue = "true")
+    @Parameter(property = "jshift.openshift.imageChangeTrigger", defaultValue = "true")
     private Boolean enableImageChangeTrigger;
 
-    @Parameter(property = "fabric8.openshift.enrichAllWithImageChangeTrigger", defaultValue = "false")
+    @Parameter(property = "jshift.openshift.enrichAllWithImageChangeTrigger", defaultValue = "false")
     private Boolean erichAllWithImageChangeTrigger;
 
     @Parameter(property = "docker.skip.resource", defaultValue = "false")
@@ -266,7 +260,7 @@ public class ResourceMojo extends AbstractJshiftMojo {
      * The artifact type for attaching the generated resource file to the project.
      * Can be either 'json' or 'yaml'
      */
-    @Parameter(property = "fabric8.resourceType")
+    @Parameter(property = "jshift.resourceType")
     private ResourceFileType resourceFileType = yaml;
 
     @Component
@@ -274,9 +268,6 @@ public class ResourceMojo extends AbstractJshiftMojo {
 
     // resourceDir when environment has been applied
     private File realResourceDir;
-
-    // resourceDirOpenShiftOverride when environment has been applied
-    private File realResourceDirOpenShiftOverride;
 
     /**
      * Returns the Template if the list contains a single Template only otherwise returns null
@@ -371,7 +362,6 @@ public class ResourceMojo extends AbstractJshiftMojo {
         }
 
         realResourceDir = ResourceUtil.getFinalResourceDir(resourceDir, environment);
-        realResourceDirOpenShiftOverride = ResourceUtil.getFinalResourceDir(resourceDirOpenShiftOverride, environment);
         updateKindFilenameMappings();
         try {
             lateInit();
