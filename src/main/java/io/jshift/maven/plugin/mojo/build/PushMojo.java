@@ -1,0 +1,131 @@
+/**
+ * Copyright 2016 Red Hat, Inc.
+ *
+ * Red Hat licenses this file to you under the Apache License, version
+ * 2.0 (the "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.  See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+package io.jshift.maven.plugin.mojo.build;
+
+
+import io.jshift.kit.build.service.docker.DockerAccessFactory;
+import io.jshift.kit.build.service.docker.ServiceHub;
+import io.jshift.kit.build.service.docker.access.DockerAccess;
+import io.jshift.kit.build.service.docker.access.log.LogOutputSpecFactory;
+import io.jshift.kit.build.service.docker.auth.AuthConfigFactory;
+import io.jshift.kit.build.service.docker.config.ConfigHelper;
+import io.jshift.kit.build.service.docker.helper.AnsiLogger;
+import io.jshift.kit.config.access.ClusterAccess;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.codehaus.plexus.PlexusConstants;
+import org.codehaus.plexus.PlexusContainer;
+import org.codehaus.plexus.context.Context;
+import org.codehaus.plexus.context.ContextException;
+import org.fusesource.jansi.Ansi;
+
+import java.io.IOException;
+
+/**
+ * Uploads the built Docker images to a Docker registry
+ *
+ * @author roland
+ * @since 16/03/16
+ */
+@Mojo(name = "push", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.COMPILE)
+public class PushMojo extends AbstractDockerMojo {
+
+    @Parameter(property = "docker.skip.push", defaultValue = "false")
+    protected boolean skipPush;
+
+    // Registry to use for push operations if no registry is specified
+    @Parameter(property = "docker.push.registry")
+    private String pushRegistry;
+
+    /**
+     * Skip building tags
+     */
+    @Parameter(property = "docker.skip.tag", defaultValue = "false")
+    private boolean skipTag;
+
+    @Parameter(property = "docker.push.retries", defaultValue = "0")
+    private int retries;
+
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        if (skip || skipPush) {
+            return;
+        }
+        clusterAccess = new ClusterAccess(getClusterConfiguration());
+        initComponents();
+    }
+
+    @Override
+    public void contextualize(Context context) throws ContextException {
+        authConfigFactory = new AuthConfigFactory((PlexusContainer) context.get(PlexusConstants.PLEXUS_KEY));
+    }
+
+    public void executePushGoal(ServiceHub hub) throws MojoFailureException, MojoExecutionException {
+        if (skipPush) {
+            return;
+        }
+
+        try {
+            hub.getRegistryService().pushImages(getResolvedImages(), retries, getRegistryConfig(pushRegistry), skipTag);
+        } catch (Exception exp) {
+            throw new MojoExecutionException(exp.getMessage());
+        }
+    }
+
+    public void initComponents() throws MojoExecutionException, MojoFailureException {
+        if (!skip) {
+            boolean ansiRestore = Ansi.isEnabled();
+            log = new AnsiLogger(getLog(), useColorForLogging(), verbose, !settings.getInteractiveMode(), getLogPrefix());
+
+            try {
+                authConfigFactory.setLog(log);
+                imageConfigResolver.setLog(log);
+
+                LogOutputSpecFactory logSpecFactory = new LogOutputSpecFactory(useColor, logStdout, logDate);
+
+                ConfigHelper.validateExternalPropertyActivation(project, images);
+
+                DockerAccess access = null;
+                try {
+                    // The 'real' images configuration to use (configured images + externally resolved images)
+                    this.minimalApiVersion = initImageConfiguration(getBuildTimestamp());
+                    if (isDockerAccessRequired()) {
+                        DockerAccessFactory.DockerAccessContext dockerAccessContext = getDockerAccessContext();
+                        access = dockerAccessFactory.createDockerAccess(dockerAccessContext);
+                    }
+                    ServiceHub serviceHub = serviceHubFactory.createServiceHub(project, session, access, log, logSpecFactory);
+                    executePushGoal(serviceHub);
+                } catch (IOException exp) {
+                    logException(exp);
+                    throw new MojoExecutionException(exp.getMessage());
+                } catch (MojoExecutionException exp) {
+                    logException(exp);
+                    throw exp;
+                } finally {
+                    if (access != null) {
+                        access.shutdown();
+                    }
+                }
+            } finally {
+                Ansi.setEnabled(ansiRestore);
+            }
+        }
+    }
+}
