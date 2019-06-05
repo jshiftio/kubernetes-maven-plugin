@@ -8,6 +8,7 @@ import io.jshift.kit.build.service.docker.auth.AuthConfigFactory;
 import io.jshift.kit.build.service.docker.config.ConfigHelper;
 import io.jshift.kit.build.service.docker.helper.AnsiLogger;
 import io.jshift.kit.config.access.ClusterAccess;
+import io.jshift.kit.config.service.JshiftServiceHub;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -46,6 +47,39 @@ public class BuildMojo extends AbstractDockerMojo implements Contextualizable {
     @Override
     public void contextualize(Context context) throws ContextException {
         authConfigFactory = new AuthConfigFactory((PlexusContainer) context.get(PlexusConstants.PLEXUS_KEY));
+    }
+
+    @Override
+    public void executeInternal(ServiceHub hub) throws MojoExecutionException {
+        if (skipBuild) {
+            return;
+        }
+        try {
+            if (shouldSkipBecauseOfPomPackaging()) {
+                getLog().info("Disabling docker build for pom packaging");
+                return;
+            }
+            if (getResolvedImages().size() == 0) {
+                log.warn("No image build configuration found or detected");
+            }
+
+            // Build the Jshift service hub
+            jshiftServiceHub = new JshiftServiceHub.Builder()
+                    .log(log)
+                    .clusterAccess(clusterAccess)
+                    .platformMode(mode)
+                    .dockerServiceHub(hub)
+                    .buildServiceConfig(getBuildServiceConfig())
+                    .repositorySystem(repositorySystem)
+                    .mavenProject(project)
+                    .build();
+
+            executeBuildGoal(hub);
+
+            jshiftServiceHub.getBuildService().postProcess(getBuildServiceConfig());
+        } catch (IOException exception) {
+            throw new MojoExecutionException(exception.getMessage());
+        }
     }
 
     public void executeDockerBuild() throws MojoExecutionException, MojoFailureException {

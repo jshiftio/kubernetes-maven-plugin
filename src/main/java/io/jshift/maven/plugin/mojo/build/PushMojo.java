@@ -69,7 +69,7 @@ public class PushMojo extends AbstractDockerMojo {
             return;
         }
         clusterAccess = new ClusterAccess(getClusterConfiguration());
-        initComponents();
+        super.execute();
     }
 
     @Override
@@ -77,55 +77,16 @@ public class PushMojo extends AbstractDockerMojo {
         authConfigFactory = new AuthConfigFactory((PlexusContainer) context.get(PlexusConstants.PLEXUS_KEY));
     }
 
-    public void executePushGoal(ServiceHub hub) throws MojoFailureException, MojoExecutionException {
+    @Override
+    public void executeInternal(ServiceHub serviceHub) throws MojoExecutionException {
         if (skipPush) {
             return;
         }
 
         try {
-            hub.getRegistryService().pushImages(getResolvedImages(), retries, getRegistryConfig(pushRegistry), skipTag);
+            serviceHub.getRegistryService().pushImages(getResolvedImages(), retries, getRegistryConfig(pushRegistry), skipTag);
         } catch (Exception exp) {
             throw new MojoExecutionException(exp.getMessage());
-        }
-    }
-
-    public void initComponents() throws MojoExecutionException, MojoFailureException {
-        if (!skip) {
-            boolean ansiRestore = Ansi.isEnabled();
-            log = new AnsiLogger(getLog(), useColorForLogging(), verbose, !settings.getInteractiveMode(), getLogPrefix());
-
-            try {
-                authConfigFactory.setLog(log);
-                imageConfigResolver.setLog(log);
-
-                LogOutputSpecFactory logSpecFactory = new LogOutputSpecFactory(useColor, logStdout, logDate);
-
-                ConfigHelper.validateExternalPropertyActivation(project, images);
-
-                DockerAccess access = null;
-                try {
-                    // The 'real' images configuration to use (configured images + externally resolved images)
-                    this.minimalApiVersion = initImageConfiguration(getBuildTimestamp());
-                    if (isDockerAccessRequired()) {
-                        DockerAccessFactory.DockerAccessContext dockerAccessContext = getDockerAccessContext();
-                        access = dockerAccessFactory.createDockerAccess(dockerAccessContext);
-                    }
-                    ServiceHub serviceHub = serviceHubFactory.createServiceHub(project, session, access, log, logSpecFactory);
-                    executePushGoal(serviceHub);
-                } catch (IOException exp) {
-                    logException(exp);
-                    throw new MojoExecutionException(exp.getMessage());
-                } catch (MojoExecutionException exp) {
-                    logException(exp);
-                    throw exp;
-                } finally {
-                    if (access != null) {
-                        access.shutdown();
-                    }
-                }
-            } finally {
-                Ansi.setEnabled(ansiRestore);
-            }
         }
     }
 }
