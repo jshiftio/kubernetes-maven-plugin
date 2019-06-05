@@ -48,10 +48,10 @@ public class WatcherManager {
         PlatformMode mode = isOpenshift ? PlatformMode.openshift : PlatformMode.kubernetes;
 
         List<Watcher> watchers =
-            pluginFactory.createServiceObjects("META-INF/fabric8/watcher-default",
-                                               "META-INF/fabric8/fabric8-watcher-default",
-                                               "META-INF/fabric8/watcher",
-                                               "META-INF/fabric8-watcher");
+            pluginFactory.createServiceObjects("META-INF/jshift/watcher-default",
+                                               "META-INF/jshift/jshift-watcher-default",
+                                               "META-INF/jshift/watcher",
+                                               "META-INF/jshift-watcher");
 
         ProcessorConfig config = watcherCtx.getConfig();
         KitLogger log = watcherCtx.getLogger();

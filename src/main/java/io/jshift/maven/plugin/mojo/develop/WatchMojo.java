@@ -24,6 +24,7 @@ import io.jshift.kit.build.service.docker.BuildService;
 import io.jshift.kit.build.service.docker.ImageConfiguration;
 import io.jshift.kit.build.service.docker.ServiceHub;
 import io.jshift.kit.build.service.docker.WatchService;
+import io.jshift.kit.build.service.docker.auth.AuthConfigFactory;
 import io.jshift.kit.build.service.docker.helper.AnsiLogger;
 import io.jshift.kit.common.KitLogger;
 import io.jshift.kit.common.util.OpenshiftHelper;
@@ -37,6 +38,7 @@ import io.jshift.kit.config.service.JshiftServiceHub;
 import io.jshift.kit.profile.ProfileUtil;
 import io.jshift.maven.enricher.api.util.KubernetesResourceUtil;
 import io.jshift.maven.plugin.generator.GeneratorManager;
+import io.jshift.maven.plugin.mojo.build.AbstractDockerMojo;
 import io.jshift.maven.plugin.watcher.WatcherManager;
 import io.jshift.watcher.api.WatcherContext;
 import org.apache.maven.plugin.AbstractMojo;
@@ -49,6 +51,10 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.repository.RepositorySystem;
+import org.codehaus.plexus.PlexusConstants;
+import org.codehaus.plexus.PlexusContainer;
+import org.codehaus.plexus.context.Context;
+import org.codehaus.plexus.context.ContextException;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,6 +62,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.Set;
 
+import static io.jshift.maven.plugin.mojo.build.ApplyMojo.DEFAULT_KUBERNETES_MANIFEST;
+import static io.jshift.maven.plugin.mojo.build.ApplyMojo.DEFAULT_OPENSHIFT_MANIFEST;
 
 
 // TODO: Similar to the DebugMojo the WatchMojo should scale down any deployment to 1 replica (or ensure that its running only with one replica)
@@ -154,6 +162,11 @@ public class WatchMojo extends AbstractDockerMojo {
     private ClusterAccess clusterAccess;
     private KubernetesClient kubernetes;
     private ServiceHub hub;
+
+    @Override
+    public void contextualize(Context context) throws ContextException {
+        authConfigFactory = new AuthConfigFactory((PlexusContainer) context.get(PlexusConstants.PLEXUS_KEY));
+    }
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -278,21 +291,35 @@ public class WatchMojo extends AbstractDockerMojo {
         }
     }
 
-    // Get generator config
-    private ProcessorConfig extractGeneratorConfig() {
-        try {
-            return ProfileUtil.blendProfileWithConfiguration(ProfileUtil.GENERATOR_CONFIG, profile, ResourceUtil.getFinalResourceDir(resourceDir, environment), generator);
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Cannot extract generator config: " + e, e);
-        }
-    }
-
     protected KitLogger createLogger(String prefix) {
         return new AnsiLogger(getLog(), useColor, verbose, !settings.getInteractiveMode(), "F8:" + prefix);
     }
 
     @Override
     protected String getLogPrefix() {
-        return "F8: ";
+        return "k8s: ";
     }
+
+    protected WatchService.WatchContext getWatchContext(ServiceHub hub) throws IOException {
+        return new WatchService.WatchContext.Builder()
+                .watchInterval(watchInterval)
+                .watchMode(watchMode)
+                .watchPostGoal(watchPostGoal)
+                .watchPostExec(watchPostExec)
+                .autoCreateCustomNetworks(autoCreateCustomNetworks)
+                .keepContainer(keepContainer)
+                .keepRunning(keepRunning)
+                .removeVolumes(removeVolumes)
+                .containerNamePattern(containerNamePattern)
+                .buildTimestamp(getBuildTimestamp())
+                .pomLabel(getGavLabel())
+                .mojoParameters(createMojoParameters())
+                .follow(follow())
+                .showLogs(showLogs())
+                .serviceHubFactory(serviceHubFactory)
+                .hub(hub)
+                .dispatcher(getLogDispatcher(hub))
+                .build();
+    }
+
 }

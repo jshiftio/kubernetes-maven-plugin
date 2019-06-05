@@ -1,6 +1,7 @@
 package io.jshift.maven.plugin.mojo.build;
 
 import io.jshift.generator.api.GeneratorContext;
+import io.jshift.kit.build.maven.GavLabel;
 import io.jshift.kit.build.maven.MavenBuildContext;
 import io.jshift.kit.build.service.docker.BuildService;
 import io.jshift.kit.build.service.docker.DockerAccessFactory;
@@ -9,11 +10,17 @@ import io.jshift.kit.build.service.docker.ImagePullManager;
 import io.jshift.kit.build.service.docker.RegistryService;
 import io.jshift.kit.build.service.docker.ServiceHub;
 import io.jshift.kit.build.service.docker.ServiceHubFactory;
+import io.jshift.kit.build.service.docker.access.DockerAccess;
 import io.jshift.kit.build.service.docker.access.DockerAccessException;
+import io.jshift.kit.build.service.docker.access.log.LogDispatcher;
+import io.jshift.kit.build.service.docker.access.log.LogOutputSpecFactory;
 import io.jshift.kit.build.service.docker.auth.AuthConfigFactory;
 import io.jshift.kit.build.service.docker.config.ConfigHelper;
 import io.jshift.kit.build.service.docker.config.DockerMachineConfiguration;
+import io.jshift.kit.build.service.docker.config.WatchMode;
 import io.jshift.kit.build.service.docker.config.handler.ImageConfigResolver;
+import io.jshift.kit.build.service.docker.helper.AnsiLogger;
+import io.jshift.kit.build.service.docker.helper.ContainerNamingUtil;
 import io.jshift.kit.build.service.docker.helper.ImageNameFormatter;
 import io.jshift.kit.common.KitLogger;
 import io.jshift.kit.common.util.EnvUtil;
@@ -36,6 +43,7 @@ import org.apache.maven.archiver.MavenArchiveConfiguration;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
@@ -46,6 +54,7 @@ import org.apache.maven.shared.filtering.MavenFileFilter;
 import org.apache.maven.shared.filtering.MavenReaderFilter;
 import org.apache.maven.shared.utils.logging.MessageUtils;
 import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
+import org.fusesource.jansi.Ansi;
 
 import java.io.File;
 import java.io.IOException;
@@ -350,6 +359,93 @@ public abstract class AbstractDockerMojo extends AbstractMojo implements ConfigH
     // Mode which is resolved, also when 'auto' is set
     protected RuntimeMode runtimeMode;
 
+    /**
+     * Watching mode for rebuilding images
+     */
+    @Parameter(property = "docker.watchMode", defaultValue = "both")
+    protected WatchMode watchMode;
+
+    @Parameter(property = "docker.watchInterval", defaultValue = "5000")
+    protected int watchInterval;
+
+    @Parameter(property = "docker.keepRunning", defaultValue = "false")
+    protected boolean keepRunning;
+
+    @Parameter(property = "docker.watchPostGoal")
+    protected String watchPostGoal;
+
+    @Parameter(property = "docker.watchPostExec")
+    protected String watchPostExec;
+
+    // Whether to keep the containers afters stopping (start/watch/stop)
+    @Parameter(property = "docker.keepContainer", defaultValue = "false")
+    protected boolean keepContainer;
+
+    // Whether to remove volumes when removing the container (start/watch/stop)
+    @Parameter(property = "docker.removeVolumes", defaultValue = "false")
+    protected boolean removeVolumes;
+
+    /**
+     * Naming pattern for how to name containers when started
+     */
+    @Parameter(property = "docker.containerNamePattern")
+    protected String containerNamePattern = ContainerNamingUtil.DEFAULT_CONTAINER_NAME_PATTERN;
+
+    /**
+     * Whether to create the customs networks (user-defined bridge networks) before starting automatically
+     */
+    @Parameter(property = "docker.autoCreateCustomNetworks", defaultValue = "false")
+    protected boolean autoCreateCustomNetworks;
+
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        if (!skip) {
+            boolean ansiRestore = Ansi.isEnabled();
+            log = new AnsiLogger(getLog(), useColorForLogging(), verbose, !settings.getInteractiveMode(), getLogPrefix());
+
+            try {
+                authConfigFactory.setLog(log);
+                imageConfigResolver.setLog(log);
+
+                LogOutputSpecFactory logSpecFactory = new LogOutputSpecFactory(useColor, logStdout, logDate);
+
+                ConfigHelper.validateExternalPropertyActivation(project, images);
+
+                DockerAccess access = null;
+                try {
+                    // The 'real' images configuration to use (configured images + externally resolved images)
+                    this.minimalApiVersion = initImageConfiguration(getBuildTimestamp());
+                    if (isDockerAccessRequired()) {
+                        DockerAccessFactory.DockerAccessContext dockerAccessContext = getDockerAccessContext();
+                        access = dockerAccessFactory.createDockerAccess(dockerAccessContext);
+                    }
+                    ServiceHub serviceHub = serviceHubFactory.createServiceHub(project, session, access, log, logSpecFactory);
+                    executeInternal(serviceHub);
+                } catch (IOException exp) {
+                    logException(exp);
+                    throw new MojoExecutionException(exp.getMessage());
+                } catch (MojoExecutionException exp) {
+                    logException(exp);
+                    throw exp;
+                } finally {
+                    if (access != null) {
+                        access.shutdown();
+                    }
+                }
+            } finally {
+                Ansi.setEnabled(ansiRestore);
+            }
+        }
+    }
+
+    /**
+     * Hook for subclass for doing the real job
+     *
+     * @param serviceHub context for accessing backends
+     */
+    protected abstract void executeInternal(ServiceHub serviceHub)
+            throws IOException, MojoExecutionException;
+
     protected BuildService.BuildContext getBuildContext() throws MojoExecutionException {
         return new BuildService.BuildContext.Builder()
                 .buildArgs(buildArgs)
@@ -532,39 +628,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo implements ConfigH
     }
 
     protected boolean isDockerAccessRequired() {
-        return runtimeMode == RuntimeMode.kubernetes;
-    }
-
-    protected void executeInternal(ServiceHub hub) throws MojoExecutionException {
-        if (skipBuild) {
-            return;
-        }
-        try {
-            if (shouldSkipBecauseOfPomPackaging()) {
-                getLog().info("Disabling docker build for pom packaging");
-                return;
-            }
-            if (getResolvedImages().size() == 0) {
-                log.warn("No image build configuration found or detected");
-            }
-
-            // Build the Jshift service hub
-            jshiftServiceHub = new JshiftServiceHub.Builder()
-                    .log(log)
-                    .clusterAccess(clusterAccess)
-                    .platformMode(mode)
-                    .dockerServiceHub(hub)
-                    .buildServiceConfig(getBuildServiceConfig())
-                    .repositorySystem(repositorySystem)
-                    .mavenProject(project)
-                    .build();
-
-            executeBuildGoal(hub);
-
-            jshiftServiceHub.getBuildService().postProcess(getBuildServiceConfig());
-        } catch (IOException exception) {
-            throw new MojoExecutionException(exception.getMessage());
-        }
+        return true; // True in case of kubernetes maven plugin
     }
 
     protected void executeBuildGoal(ServiceHub hub) throws IOException, MojoExecutionException {
@@ -789,6 +853,28 @@ public abstract class AbstractDockerMojo extends AbstractMojo implements ConfigH
 
         return clusterConfigurationBuilder.from(System.getProperties())
                 .from(project.getProperties()).build();
+    }
+
+    protected GavLabel getGavLabel() {
+        // Label used for this run
+        return new GavLabel(project.getGroupId(), project.getArtifactId(), project.getVersion());
+    }
+
+    protected String showLogs() {
+        return System.getProperty("docker.showLogs");
+    }
+
+    protected boolean follow() {
+        return Boolean.valueOf(System.getProperty("docker.follow", "false"));
+    }
+
+    protected LogDispatcher getLogDispatcher(ServiceHub hub) {
+        LogDispatcher dispatcher = (LogDispatcher) getPluginContext().get(CONTEXT_KEY_LOG_DISPATCHER);
+        if (dispatcher == null) {
+            dispatcher = new LogDispatcher(hub.getDockerAccess());
+            getPluginContext().put(CONTEXT_KEY_LOG_DISPATCHER, dispatcher);
+        }
+        return dispatcher;
     }
 
 }
