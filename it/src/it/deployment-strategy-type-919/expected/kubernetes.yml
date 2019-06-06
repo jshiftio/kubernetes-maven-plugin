@@ -24,7 +24,7 @@ items:
     labels:
       provider: jshift
       app: deployment-strategy-type-919
-      version: 3.5-SNAPSHOT
+      version: 0.1-SNAPSHOT
       group: io.jshift.devops.apps
     name: jshift-docker-registry
   spec:
@@ -42,7 +42,7 @@ items:
         labels:
           provider: jshift
           app: deployment-strategy-type-919
-          version: 3.5-SNAPSHOT
+          version: 0.1-SNAPSHOT
           group: io.jshift.devops.apps
       spec:
         containers:

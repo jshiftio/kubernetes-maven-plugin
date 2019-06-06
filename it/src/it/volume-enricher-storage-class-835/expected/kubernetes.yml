@@ -24,7 +24,7 @@ items:
     labels:
       provider: jshift
       app: volume-enricher-storage-class-835
-      version: 3.5-SNAPSHOT
+      version: 0.1-SNAPSHOT
       group: io.jshift.devops.apps
       expose: "true"
     name: jshift-docker-registry
@@ -43,7 +43,7 @@ items:
     labels:
       app: volume-enricher-storage-class-835
       provider: jshift
-      version: 3.5-SNAPSHOT
+      version: 0.1-SNAPSHOT
       group: io.jshift
     name: jshift-docker-registry-storage
   spec:
@@ -58,7 +58,7 @@ items:
     labels:
       provider: jshift
       app: volume-enricher-storage-class-835
-      version: 3.5-SNAPSHOT
+      version: 0.1-SNAPSHOT
       group: io.jshift.devops.apps
     name: jshift-docker-registry
   spec:
@@ -74,7 +74,7 @@ items:
         labels:
           provider: jshift
           app: volume-enricher-storage-class-835
-          version: 3.5-SNAPSHOT
+          version: 0.1-SNAPSHOT
           group: io.jshift.devops.apps
       spec:
         containers:

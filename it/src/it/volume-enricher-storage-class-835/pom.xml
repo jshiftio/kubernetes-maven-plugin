@@ -22,7 +22,7 @@
 
   <artifactId>volume-enricher-storage-class-835</artifactId>
   <groupId>io.jshift</groupId>
-  <version>3.5-SNAPSHOT</version>
+  <version>0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
 
