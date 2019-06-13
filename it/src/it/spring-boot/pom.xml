@@ -23,7 +23,7 @@
 
   <artifactId>jshift-maven-sample-spring-boot</artifactId>
   <groupId>io.jshift</groupId>
-  <version>3.5-SNAPSHOT</version>
+  <version>0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <parent>

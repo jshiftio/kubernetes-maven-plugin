@@ -22,7 +22,7 @@
 
   <artifactId>fabric8-maven-revision-history</artifactId>
   <groupId>io.jshift</groupId>
-  <version>3.5-SNAPSHOT</version>
+  <version>0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <parent>
