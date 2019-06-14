@@ -48,7 +48,7 @@
 
             <plugin>
                 <groupId>io.jshift</groupId>
-                <artifactId>kubernetes-maven-plugin</artifactId>
+                <artifactId>k8s-maven-plugin</artifactId>
                 <version>@jshift.version@</version>
             </plugin>
 

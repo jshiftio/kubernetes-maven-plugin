@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
       <groupId>io.jshift</groupId>
-      <artifactId>kubernetes-maven-plugin-build</artifactId>
+      <artifactId>k8s-maven-plugin-build</artifactId>
       <version>0.1-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
     </parent>
@@ -15,10 +15,10 @@
     </prerequisites>
 
     <groupId>io.jshift</groupId>
-    <artifactId>kubernetes-maven-plugin</artifactId>
+    <artifactId>k8s-maven-plugin</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
-    <name>kubernetes-maven-plugin</name>
+    <name>Kubernetes Maven Plugin :: Plugin</name>
     <description>Kubernetes Maven Plugin</description>
 
     <properties>
