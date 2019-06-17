@@ -27,7 +27,7 @@ items:
       jshift.io/git-branch: "@ignore@"
       prometheus.io/port: "9779"
       jshift.io/scm-tag: "HEAD"
-      jshift.io/scm-url: "git://github.com/fabric8io/kubernetes-maven-plugin.git"
+      jshift.io/scm-url: "git://github.com/fabric8io/k8s-maven-plugin.git"
     labels:
       provider: jshift
       app: jshift-maven-sample-zero-config
@@ -51,7 +51,7 @@ items:
       jshift.io/git-commit: "@ignore@"
       jshift.io/git-branch: "@ignore@"
       jshift.io/scm-tag: "HEAD"
-      jshift.io/scm-url: "git://github.com/fabric8io/kubernetes-maven-plugin.git"
+      jshift.io/scm-url: "git://github.com/fabric8io/k8s-maven-plugin.git"
     labels:
       provider: jshift
       app: jshift-maven-sample-zero-config
@@ -71,7 +71,7 @@ items:
           jshift.io/git-commit: "@ignore@"
           jshift.io/git-branch: "@ignore@"
           jshift.io/scm-tag: "HEAD"
-          jshift.io/scm-url: "git://github.com/fabric8io/kubernetes-maven-plugin.git"
+          jshift.io/scm-url: "git://github.com/fabric8io/k8s-maven-plugin.git"
         labels:
           provider: jshift
           app: jshift-maven-sample-zero-config
