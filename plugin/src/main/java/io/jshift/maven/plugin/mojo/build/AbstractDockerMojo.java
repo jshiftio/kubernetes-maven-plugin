@@ -100,7 +100,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo implements ConfigH
 
     // For verbose output
     @Parameter(property = "docker.verbose", defaultValue = "false")
-    protected boolean verbose;
+    protected String verbose;
 
     // The date format to use when putting out logs
     @Parameter(property = "docker.logDate")

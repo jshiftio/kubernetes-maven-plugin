@@ -154,7 +154,7 @@ public class WatchMojo extends AbstractDockerMojo {
 
     // For verbose output
     @Parameter(property = "jshift.verbose", defaultValue = "false")
-    protected boolean verbose;
+    protected String verbose;
 
     @Component
     protected RepositorySystem repositorySystem;
