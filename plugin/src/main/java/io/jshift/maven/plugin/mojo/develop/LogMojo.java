@@ -27,7 +27,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import java.util.Set;
 
 /**
- * This goal tails the log of the most recent pod for the app that was deployed via <code>kubernetes:deploy</code>
+ * This goal tails the log of the most recent pod for the app that was deployed via <code>k8s:deploy</code>
  * <p>
  * To terminate the log hit
  * <code>Ctrl+C</code>

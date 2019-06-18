@@ -139,11 +139,11 @@ public class WatchMojo extends AbstractDockerMojo {
     /**
      * Folder where to find project specific files, e.g a custom profile
      */
-    @Parameter(property = "jshift.resourceDir", defaultValue = "${basedir}/src/main/fabric8")
+    @Parameter(property = "jshift.resourceDir", defaultValue = "${basedir}/src/main/jshift")
     private File resourceDir;
 
     /**
-     * Environment name where resources are placed. For example, if you set this property to dev and resourceDir is the default one, Fabric8 will look at src/main/fabric8/dev
+     * Environment name where resources are placed. For example, if you set this property to dev and resourceDir is the default one, Plugin will look at src/main/jshift/dev
      */
     @Parameter(property = "jshift.environment")
     private String environment;
