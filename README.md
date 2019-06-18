@@ -1,9 +1,11 @@
-## kubernetes-maven-plugin
+## Kubernetes Maven Plugin
 
 [![Circle CI](https://circleci.com/gh/jshiftio/kubernetes-maven-plugin/tree/master.svg?style=shield)](https://circleci.com/gh/jshiftio/kubernetes-maven-plugin/tree/master)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=jshiftio_kubernetes-maven-plugin&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=jshiftio_kubernetes-maven-plugin)
 [![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=jshiftio_kubernetes-maven-plugin&metric=sqale_index)](https://sonarcloud.io/dashboard?id=jshiftio_kubernetes-maven-plugin)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=jshiftio_kubernetes-maven-plugin&metric=coverage)](https://sonarcloud.io/dashboard?id=jshiftio_kubernetes-maven-plugin)
+
+![Sample Demo](k8s-maven-plugin-demo.gif)
 
 ### Introduction
 This Maven plugin is a one-stop-shop for building and deploying Java applications for Docker, Kubernetes and OpenShift. It brings your Java applications on to Kubernetes and OpenShift. It provides a tight integration into maven and benefits from the build configuration already provided. It focuses on three tasks:
