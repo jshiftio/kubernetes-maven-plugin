@@ -31,9 +31,6 @@ import java.io.IOException;
 @Mojo(name = "build", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class BuildMojo extends AbstractDockerMojo implements Contextualizable {
 
-    // Handler dealing with authentication credentials
-    private AuthConfigFactory authConfigFactory;
-
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skip || skipBuild) {
@@ -42,11 +39,6 @@ public class BuildMojo extends AbstractDockerMojo implements Contextualizable {
         clusterAccess = new ClusterAccess(getClusterConfiguration());
         // Platform mode is already used in executeInternal()
         executeDockerBuild();
-    }
-
-    @Override
-    public void contextualize(Context context) throws ContextException {
-        authConfigFactory = new AuthConfigFactory((PlexusContainer) context.get(PlexusConstants.PLEXUS_KEY));
     }
 
     @Override

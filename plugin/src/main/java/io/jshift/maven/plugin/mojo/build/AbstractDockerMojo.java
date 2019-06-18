@@ -53,6 +53,10 @@ import org.apache.maven.settings.Settings;
 import org.apache.maven.shared.filtering.MavenFileFilter;
 import org.apache.maven.shared.filtering.MavenReaderFilter;
 import org.apache.maven.shared.utils.logging.MessageUtils;
+import org.codehaus.plexus.PlexusConstants;
+import org.codehaus.plexus.PlexusContainer;
+import org.codehaus.plexus.context.Context;
+import org.codehaus.plexus.context.ContextException;
 import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
 import org.fusesource.jansi.Ansi;
 
@@ -396,6 +400,11 @@ public abstract class AbstractDockerMojo extends AbstractMojo implements ConfigH
      */
     @Parameter(property = "docker.autoCreateCustomNetworks", defaultValue = "false")
     protected boolean autoCreateCustomNetworks;
+
+    @Override
+    public void contextualize(Context context) throws ContextException {
+        authConfigFactory = new AuthConfigFactory((PlexusContainer) context.get(PlexusConstants.PLEXUS_KEY));
+    }
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
