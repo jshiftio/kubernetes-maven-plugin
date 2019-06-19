@@ -367,7 +367,7 @@ public class ResourceMojo extends AbstractJshiftMojo {
             lateInit();
             // Resolve the Docker image build configuration
             resolvedImages = getResolvedImages(images, log);
-            if (!skip && (!isPomProject() || hasFabric8Dir())) {
+            if (!skip && (!isPomProject() || hasJshiftDir())) {
                 // Extract and generate resources which can be a mix of Kubernetes and OpenShift resources
                 KubernetesList resources;
                 for(PlatformMode platformMode : new PlatformMode[] { PlatformMode.kubernetes }) {
@@ -381,7 +381,7 @@ public class ResourceMojo extends AbstractJshiftMojo {
                 }
             }
         } catch (IOException e) {
-            throw new MojoExecutionException("Failed to generate fabric8 descriptor", e);
+            throw new MojoExecutionException("Failed to generate kubernetes descriptor", e);
         }
     }
 
@@ -409,8 +409,8 @@ public class ResourceMojo extends AbstractJshiftMojo {
         } catch (ConstraintViolationException e) {
             if (failOnValidationError) {
                 log.error("[[R]]" + e.getMessage() + "[[R]]");
-                log.error("[[R]]use \"mvn -Dfabric8.skipResourceValidation=true\" option to skip the validation[[R]]");
-                throw new MojoFailureException("Failed to generate fabric8 descriptor");
+                log.error("[[R]]use \"mvn -Djshift.skipResourceValidation=true\" option to skip the validation[[R]]");
+                throw new MojoFailureException("Failed to generate kubernetes descriptor");
             } else {
                 log.warn("[[Y]]" + e.getMessage() + "[[Y]]");
             }
@@ -519,7 +519,7 @@ public class ResourceMojo extends AbstractJshiftMojo {
         File[] resourceFiles = KubernetesResourceUtil.listResourceFragments(realResourceDir, resources !=null ? resources.getRemotes() : null, log);
         KubernetesListBuilder builder;
 
-        // Add resource files found in the fabric8 directory
+        // Add resource files found in the jshift directory
         if (resourceFiles != null && resourceFiles.length > 0) {
             log.info("using resource templates from %s", realResourceDir);
             builder = readResourceFragments(platformMode, resourceFiles);
@@ -588,7 +588,7 @@ public class ResourceMojo extends AbstractJshiftMojo {
 
     // get a reference date
     private Date getBuildReferenceDate() throws MojoExecutionException {
-        // Pick up an existing build date created by fabric8:build previously
+        // Pick up an existing build date created by k8s:build previously
         File tsFile = new File(project.getBuild().getDirectory(), DOCKER_BUILD_TIMESTAMP);
         if (!tsFile.exists()) {
             return new Date();
@@ -622,7 +622,7 @@ public class ResourceMojo extends AbstractJshiftMojo {
         return ret;
     }
 
-    private boolean hasFabric8Dir() {
+    private boolean hasJshiftDir() {
         return realResourceDir.isDirectory();
     }
 

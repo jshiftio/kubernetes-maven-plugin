@@ -16,13 +16,8 @@
 package io.jshift.maven.plugin.mojo.build;
 
 
-import io.jshift.kit.build.service.docker.DockerAccessFactory;
 import io.jshift.kit.build.service.docker.ServiceHub;
-import io.jshift.kit.build.service.docker.access.DockerAccess;
-import io.jshift.kit.build.service.docker.access.log.LogOutputSpecFactory;
 import io.jshift.kit.build.service.docker.auth.AuthConfigFactory;
-import io.jshift.kit.build.service.docker.config.ConfigHelper;
-import io.jshift.kit.build.service.docker.helper.AnsiLogger;
 import io.jshift.kit.config.access.ClusterAccess;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -34,9 +29,6 @@ import org.codehaus.plexus.PlexusConstants;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.context.Context;
 import org.codehaus.plexus.context.ContextException;
-import org.fusesource.jansi.Ansi;
-
-import java.io.IOException;
 
 /**
  * Uploads the built Docker images to a Docker registry
