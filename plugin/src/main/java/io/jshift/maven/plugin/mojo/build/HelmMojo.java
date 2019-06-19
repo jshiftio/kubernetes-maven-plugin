@@ -21,7 +21,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Developer;
 import org.apache.maven.model.Scm;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
