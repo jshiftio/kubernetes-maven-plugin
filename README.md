@@ -1,6 +1,7 @@
 ## Kubernetes Maven Plugin
 
 [![Circle CI](https://circleci.com/gh/jshiftio/kubernetes-maven-plugin/tree/master.svg?style=shield)](https://circleci.com/gh/jshiftio/kubernetes-maven-plugin/tree/master)
+[![Maven Central](https://img.shields.io/maven-central/v/io.jshift/k8s-maven-plugin.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.jshift%22%20AND%20a:%22k8s-maven-plugin%22)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=jshiftio_kubernetes-maven-plugin&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=jshiftio_kubernetes-maven-plugin)
 [![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=jshiftio_kubernetes-maven-plugin&metric=sqale_index)](https://sonarcloud.io/dashboard?id=jshiftio_kubernetes-maven-plugin)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=jshiftio_kubernetes-maven-plugin&metric=coverage)](https://sonarcloud.io/dashboard?id=jshiftio_kubernetes-maven-plugin)
@@ -8,10 +9,10 @@
 ![Sample Demo](k8s-maven-plugin-demo.gif)
 
 ### Introduction
-This Maven plugin is a one-stop-shop for building and deploying Java applications for Docker, Kubernetes and OpenShift. It brings your Java applications on to Kubernetes and OpenShift. It provides a tight integration into maven and benefits from the build configuration already provided. It focuses on three tasks:
+This Maven plugin is a one-stop-shop for building and deploying Java applications for Docker, Kubernetes. It brings your Java applications on to Kubernetes. It provides a tight integration into maven and benefits from the build configuration already provided. It focuses on three tasks:
 + Building Docker images
-+ Creating OpenShift and Kubernetes resources
-+ Deploy application on Kubernetes and OpenShift
++ Creating Kubernetes resources
++ Deploy applications
 
 ### Usage
 To enable kubernetes maven plugin on your project just add this to the plugins sections of your pom.xml:
@@ -19,34 +20,33 @@ To enable kubernetes maven plugin on your project just add this to the plugins s
 ```
       <plugin>
         <groupId>io.jshift</groupId>
-        <artifactId>kubernetes-maven-plugin</artifactId>
+        <artifactId>k8s-maven-plugin</artifactId>
         <version>${jshift.kubernetes.version}</version>
       </plugin>
 ```
 
 | Goal                                          | Description                           |
 | --------------------------------------------- | ------------------------------------- |
-| [`kubernetes:resource`](https://fabric8io.github.io/fabric8-maven-plugin/#fabric8:resource) | Create Kubernetes and OpenShift resource descriptors |
-| [`kubernetes:build`](https://fabric8io.github.io/fabric8-maven-plugin/#fabric8:build) | Build Docker images |
-| [`kubernetes:push`](https://fabric8io.github.io/fabric8-maven-plugin/#fabric8:push) | Push Docker images to a registry  |
-| [`kubernetes:deploy`](https://fabric8io.github.io/fabric8-maven-plugin/#fabric8:deploy) | Deploy Kubernetes / OpenShift resource objects to a cluster  |
-| [`kubernetes:watch`](https://fabric8io.github.io/fabric8-maven-plugin/#fabric8:watch) | Watch for doing rebuilds and restarts |
+| [`k8s:resource`](https://fabric8io.github.io/fabric8-maven-plugin/#fabric8:resource) | Create Kubernetes resource descriptors |
+| [`k8s:build`](https://fabric8io.github.io/fabric8-maven-plugin/#fabric8:build) | Build Docker images |
+| [`k8s:push`](https://fabric8io.github.io/fabric8-maven-plugin/#fabric8:push) | Push Docker images to a registry  |
+| [`k8s:deploy`](https://fabric8io.github.io/fabric8-maven-plugin/#fabric8:deploy) | Deploy Kubernetes resource objects to a cluster  |
+| [`k8s:watch`](https://fabric8io.github.io/fabric8-maven-plugin/#fabric8:watch) | Watch for doing rebuilds and restarts |
 
 ### Features
 
 * Dealing with Docker images and hence inherits its flexible and powerful configuration.
-* Supports both Kubernetes and OpenShift descriptors
-* OpenShift Docker builds with a binary source (as an alternative to a direct image build agains a Docker daemon)
+* Supports Kubernetes descriptors
 * Various configuration styles:
   * **Zero Configuration** for a quick ramp-up where opinionated defaults will be pre-selected.
   * **Inline Configuration** within the plugin configuration in an XML syntax.
   * **External Configuration** templates of the real deployment descriptors which are enriched by the plugin.
 * Flexible customization:
   * **Generators** analyze the Maven build and generated automatic Docker image configurations for certain systems (spring-boot, plain java, karaf ...)
-  * **Enrichers** extend the Kubernetes / OpenShift resource descriptors by extra information like SCM labels and can add default objects like Services.
+  * **Enrichers** extend the Kubernetes resource descriptors by extra information like SCM labels and can add default objects like Services.
   * Generators and Enrichers can be individually configured and combined into *profiles*
 
-### OpenShift and Kubernetes Compatibility
+### Kubernetes Compatibility
 
 :heavy_check_mark: : Supported, all available features can be used
 
