@@ -22,7 +22,7 @@
     <description>Kubernetes Maven Plugin</description>
 
     <properties>
-        <jshift.kit.version>0.1-SNAPSHOT</jshift.kit.version>
+        <jshift.kit.version>0.1.0</jshift.kit.version>
         <maven-plugin-api.version>3.5.4</maven-plugin-api.version>
         <maven-plugin-annotation.version>3.5.2</maven-plugin-annotation.version>
         <maven-compiler-plugin.version>3.6.2</maven-compiler-plugin.version>
