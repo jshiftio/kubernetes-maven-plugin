@@ -292,7 +292,7 @@ public class WatchMojo extends AbstractDockerMojo {
     }
 
     protected KitLogger createLogger(String prefix) {
-        return new AnsiLogger(getLog(), useColor, verbose, !settings.getInteractiveMode(), "F8:" + prefix);
+        return new AnsiLogger(getLog(), useColor, verbose, !settings.getInteractiveMode(), "k8s:" + prefix);
     }
 
     @Override
