@@ -38,6 +38,8 @@
     <junit.version>4.11</junit.version>
     <citrus-core.version>2.6.2</citrus-core.version>
     <jackson-dataformat-yaml.version>2.9.8</jackson-dataformat-yaml.version>
+    <jdk.version>1.8</jdk.version>
+    <maven-compiler-plugin.version>3.6.2</maven-compiler-plugin.version>
   </properties>
 
   <repositories>
@@ -71,6 +73,7 @@
   <modules>
     <module>plugin</module>
     <module>it</module>
+    <module>doc</module>
   </modules>
 
   <dependencyManagement>
@@ -101,6 +104,16 @@
   <build>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${maven-compiler-plugin.version}</version>
+          <configuration>
+            <source>${jdk.version}</source>
+            <target>${jdk.version}</target>
+            <compilerArgument>-Xlint:deprecation</compilerArgument>
+            <showWarnings>true</showWarnings>
+          </configuration>
+        </plugin>
 	<plugin>
 	  <groupId>org.apache.maven.plugins</groupId>
 	  <artifactId>maven-failsafe-plugin</artifactId>
