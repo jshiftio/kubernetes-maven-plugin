@@ -34,8 +34,8 @@ This plugin comes with a set of default enrichers. In addition custom enrichers 
 
 kubernetes-maven-plugin comes with a set of enrichers which are enabled by default. There are two categories of default enrichers:
 
-* *Standard Enrichers* are used to add default resource object when they are missing or add common metadata extracted from the given build information
-* *Fabric8 Enrichers* are enrichers which are focused on a certain tech stack that they detect.
+* *Generic Enrichers* are used to add default resource object when they are missing or add common metadata extracted from the given build information
+* *Specific Enrichers* are enrichers which are focused on a certain tech stack that they detect.
 
 . Default Enrichers Overview
 [cols="2,7"]
@@ -166,7 +166,7 @@ Enricher which adds appropriate annotations and volumes to enable OpenShift's au
 This enricher adds an init container to convert the service serving certificates from PEM (the format that OpenShift generates them in) to
 a JKS-format Java keystore ready for consumption in Java services.
 
-This enricher is disabled by default. In order to use it, you must configure the Fabric8 Maven plugin to use this enricher:
+This enricher is disabled by default. In order to use it, you must configure the Kubernetes Maven plugin to use this enricher:
 
 [source,xml]
 ----
@@ -243,10 +243,9 @@ The auto-TLS enricher supports the following configuration options:
 | `server`
 |===
 
-[[enrichers-jshift.]
-=== Fabric8 Enrichers
-
-Fabric8 enrichers are used for providing the connection to other components of the jshift.Microservices platform. They are useful to add icons to to application or links to documentation sites.
+[[enrichers-jshift]
+=== Jshift Enrichers
+Jshift enrichers are used for providing the connection to other components of the jshift.Microservices platform. They are useful to add icons to to application or links to documentation sites.
 
 [[jshift-healthcheck-karaf]]
 ==== jshift-healthcheck-karaf

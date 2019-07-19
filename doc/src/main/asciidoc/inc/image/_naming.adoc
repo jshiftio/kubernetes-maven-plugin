@@ -7,7 +7,7 @@ When specifying the image name in the configuration with the `<name>` field you 
 | Placeholder | Description
 
 | *%g*
-| The last part of the Maven group name, sanitized so that it can be used as username on GitHub. Only the part after the last dot is used. E.g. for a group id `io.fabric8` this placeholder would insert `fabric8`
+| The last part of the Maven group name, sanitized so that it can be used as username on GitHub. Only the part after the last dot is used. E.g. for a group id `io.jshift` this placeholder would insert `jshift`
 
 | *%a*
 | A sanitized version of the artefact id so that it can be used as part of an Docker image name. I.e. it is converted to all lower case (as required by Docker)
@@ -55,7 +55,6 @@ When specifying the container name pattern the following placeholders can be use
 You can combine the placeholders in any combination and will be resolved during `docker:start`, `docker:stop` and `docker:watch`.
 
 The following example is using a container name pattern of `%n-%i` which is also the default.
-Given an image `fabric8io/dmp-sample-jolokia:latest`, then during `mvn docker:start` a container with the name `dmp-sample-jolokia-1` is first tried.
 If there is already a container with this name, then `dmp-sample-jolokia-2` is the second attempt.
 This goes on until a "free" name is found.
 
