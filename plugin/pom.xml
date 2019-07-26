@@ -25,9 +25,7 @@
         <jshift.kit.version>0.1.0</jshift.kit.version>
         <maven-plugin-api.version>3.5.4</maven-plugin-api.version>
         <maven-plugin-annotation.version>3.5.2</maven-plugin-annotation.version>
-        <maven-compiler-plugin.version>3.6.2</maven-compiler-plugin.version>
         <maven-plugin-plugin.version>3.5</maven-plugin-plugin.version>
-        <jdk.version>1.8</jdk.version>
         <plexus-component-metadata.version>1.7.1</plexus-component-metadata.version>
         <maven-resources-plugin.version>3.0.2</maven-resources-plugin.version>
     </properties>
@@ -167,16 +165,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven-compiler-plugin.version}</version>
-                <configuration>
-                    <source>${jdk.version}</source>
-                    <target>${jdk.version}</target>
-                    <compilerArgument>-Xlint:deprecation</compilerArgument>
-                    <showWarnings>true</showWarnings>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
