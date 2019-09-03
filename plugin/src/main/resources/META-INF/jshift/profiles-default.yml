@@ -114,8 +114,15 @@
     - jshift-controller
     - jshift-service
     - jshift-image
-    - jshift-project
+    - jshift-project-label
     - jshift-debug
+    - jshift-namespace
+    - jshift-metadata
+    - jshift-controller-from-configuration
+    - jshift-openshift-deploymentconfig
+    - jshift-openshift-project
+    - jshift-openshift-service-expose
+    - jshift-openshift-route
   # Only dependencies, no build, use other resources raw
 - name: aggregate
   generator:
